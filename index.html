@@ -6,7 +6,6 @@
     <meta property="og:title" content="Chromaful">
     <meta property="og:description" content="Generate procedural gradient-style wallpapers">
     <meta property="og:url" content="https://chromaful.netlify.app/">
-    <meta property="og:image" content="https://chromaful.netlify.app/og-image.png">
     <title>Chromaful</title>
     <style>
         * {
@@ -25,7 +24,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #fafafa;
+            background: #ffffff;
             color: #1a1a1a;
         }
 
@@ -39,60 +38,47 @@
         h1 {
             font-size: 3.5rem;
             font-weight: 700;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             letter-spacing: -1px;
         }
 
         .subtitle {
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: #666;
             margin-bottom: 48px;
             font-weight: 400;
-            line-height: 1.5;
         }
 
         .preview {
             width: 100%;
             aspect-ratio: 16 / 9;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #ff006e, #8338ec, #3a86ff, #06ffa5);
-            background-size: 400% 400%;
-            animation: gradientShift 8s ease infinite;
-            margin-bottom: 48px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-        }
-
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin-bottom: 40px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         }
 
         .cta {
             display: inline-block;
-            padding: 14px 32px;
+            padding: 12px 28px;
             background: #1a1a1a;
             color: white;
             text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
+            border-radius: 6px;
+            font-weight: 500;
             font-size: 1rem;
             transition: all 0.2s ease;
-            border: 2px solid #1a1a1a;
+            border: none;
+            cursor: pointer;
         }
 
         .cta:hover {
-            background: white;
-            color: #1a1a1a;
+            background: #333;
         }
 
         @media (max-width: 640px) {
             h1 {
                 font-size: 2.5rem;
-            }
-
-            .subtitle {
-                font-size: 1rem;
             }
 
             .preview {
@@ -106,7 +92,7 @@
         <h1>Chromaful</h1>
         <p class="subtitle">Generate procedural gradient-style wallpapers</p>
         <div class="preview"></div>
-        <a href="https://chromaful.netlify.app/" class="cta">Open App →</a>
+        <a href="https://chromaful.netlify.app/" class="cta">Open App</a>
     </div>
 </body>
 </html>
