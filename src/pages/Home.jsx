@@ -7,31 +7,31 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
 const WALLPAPER_TYPES = [
-  { id: "solid", label: "Solid Color" },
-  { id: "linear", label: "Linear Gradient" },
-  { id: "radial", label: "Radial Gradient" },
-  { id: "twisted", label: "Twisted Gradient" },
-  { id: "bilinear", label: "Bilinear Gradient" },
-  { id: "plasma", label: "Plasma" },
-  { id: "noise", label: "Blurred Noise" },
-  { id: "conic", label: "Conic Gradient" },
-  { id: "voronoi", label: "Voronoi" },
-  { id: "stripes", label: "Stripes" },
-  { id: "isolines", label: "Isolines" },
-  { id: "flowfield", label: "Flow Field" },
-  { id: "random", label: "Random" },
+  { id: "solid", label: "solid color" },
+  { id: "linear", label: "linear gradient" },
+  { id: "radial", label: "radial gradient" },
+  { id: "twisted", label: "twisted gradient" },
+  { id: "bilinear", label: "bilinear gradient" },
+  { id: "plasma", label: "plasma" },
+  { id: "noise", label: "blurred noise" },
+  { id: "conic", label: "conic gradient" },
+  { id: "voronoi", label: "voronoi" },
+  { id: "stripes", label: "stripes" },
+  { id: "isolines", label: "isolines" },
+  { id: "flowfield", label: "flow field" },
+  { id: "random", label: "random" },
 ];
 
 export const PRESET_THEMES = {
-  Zen: ["#BEE9E8", "#D4ECD5", "#FCF6BD", "#FAF9F6"],
-  Sunset: ["#FF6B6B", "#FF8E53", "#FF6B9D", "#C44569"],
-  Ocean: ["#0099F7", "#00B4D8", "#48CAE4", "#023E8A"],
-  Forest: ["#2D6A4F", "#40916C", "#74C69D", "#D8F3DC"],
-  Fire: ["#E63946", "#F4A261", "#E76F51", "#FFBE0B"],
-  Aurora: ["#7B2FBE", "#5E60CE", "#48CAE4", "#80FFDB"],
-  Candy: ["#FF85A1", "#FFA3B1", "#FFCAD4", "#B5E2FA"],
-  Autumn: ["#E76F51", "#F4A261", "#E9C46A", "#2A9D8F"],
-  Monochrome: ["#1A1A2E", "#16213E", "#0F3460", "#533483"],
+  zen: ["#BEE9E8", "#D4ECD5", "#FCF6BD", "#FAF9F6"],
+  sunset: ["#FF6B6B", "#FF8E53", "#FF6B9D", "#C44569"],
+  ocean: ["#0099F7", "#00B4D8", "#48CAE4", "#023E8A"],
+  forest: ["#2D6A4F", "#40916C", "#74C69D", "#D8F3DC"],
+  fire: ["#E63946", "#F4A261", "#E76F51", "#FFBE0B"],
+  aurora: ["#7B2FBE", "#5E60CE", "#48CAE4", "#80FFDB"],
+  candy: ["#FF85A1", "#FFA3B1", "#FFCAD4", "#B5E2FA"],
+  autumn: ["#E76F51", "#F4A261", "#E9C46A", "#2A9D8F"],
+  monochrome: ["#1A1A2E", "#16213E", "#0F3460", "#533483"],
 };
 
 export const RESOLUTIONS = ["1366×768", "1920×1080", "2560×1440", "3840×2160"];
@@ -255,7 +255,7 @@ export default function Home() {
 
   return (
     <div 
-      className="flex h-screen overflow-hidden relative"
+      className="flex h-[100dvh] w-screen overflow-hidden relative"
       style={{
         background: "radial-gradient(circle at center, #181628 0%, #0d0c15 100%)",
       }}
@@ -351,7 +351,7 @@ export default function Home() {
                     backdropFilter: "blur(12px)",
                     WebkitBackdropFilter: "blur(12px)",
                   }}
-                  title="Reset Animation Position"
+                  title="reset animation position"
                 >
                   <RotateCcw className="w-4 h-4" />
                 </motion.button>
@@ -370,7 +370,7 @@ export default function Home() {
                     backdropFilter: "blur(12px)",
                     WebkitBackdropFilter: "blur(12px)",
                   }}
-                  title={animateBg ? "Pause Animation" : "Play Animation"}
+                  title={animateBg ? "pause animation" : "play animation"}
                 >
                   {animateBg ? <Pause className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white ml-0.5" />}
                 </motion.button>

@@ -360,9 +360,9 @@ export default function MobileControlSheet({
                 <div>
                   <h3 className="text-white font-bold text-base tracking-tight flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-orange-400" />
-                    chromaful Designer
+                    chromaful designer
                   </h3>
-                  <p className="text-[10px] text-white/40 font-mono mt-0.5">Customize your dynamic wallpaper</p>
+                  <p className="text-[10px] text-white/40 font-mono mt-0.5">customize your dynamic wallpaper</p>
                 </div>
                 <motion.button
                   whileTap={{ scale: 0.95 }}
@@ -376,10 +376,10 @@ export default function MobileControlSheet({
               {/* Tabs Navigation Header */}
               <div className="flex border-b border-white/10 px-4 py-1 shrink-0 gap-1">
                 {[
-                  { id: "styles", label: "Styles", icon: Grid },
-                  { id: "colors", label: "Colors", icon: Palette },
-                  { id: "adjust", label: "Tweak", icon: Sliders },
-                  { id: "export", label: "Save", icon: Download },
+                  { id: "styles", label: "styles", icon: Grid },
+                  { id: "colors", label: "colors", icon: Palette },
+                  { id: "adjust", label: "tweak", icon: Sliders },
+                  { id: "export", label: "save", icon: Download },
                 ].map((tab) => {
                   const Icon = tab.icon;
                   const isActive = activeTab === tab.id;
@@ -437,8 +437,8 @@ export default function MobileControlSheet({
                   <div className="space-y-4">
                     {/* Active Colors Row */}
                     <div>
-                      <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono mb-2">Select Swatch to Edit</p>
-                      <div className="flex items-center gap-3 overflow-x-auto pb-2 min-h-[50px] scrollbar-none">
+                      <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono mb-2">select swatch to edit</p>
+                      <div className="flex items-center gap-3 overflow-x-auto py-2 px-1 min-h-[60px] scrollbar-none">
                         {clampedColors.map((color, idx) => {
                           const isActive = activeColorIdx === idx;
                           return (
@@ -465,7 +465,7 @@ export default function MobileControlSheet({
                                     e.stopPropagation();
                                     removeColor(idx);
                                   }}
-                                  className="absolute -top-1 -right-1 w-4.5 h-4.5 bg-red-500 rounded-full flex items-center justify-center shadow-lg border border-white/10 z-10 active:scale-90"
+                                  className="absolute top-0 right-0 w-4.5 h-4.5 bg-red-500 rounded-full flex items-center justify-center shadow-lg border border-white/10 z-10 active:scale-90"
                                 >
                                   <Trash2 className="w-2.5 h-2.5 text-white" />
                                 </button>
@@ -495,6 +495,15 @@ export default function MobileControlSheet({
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-lg shadow border border-white/10" style={{ backgroundColor: activeColor }} />
                           <span className="text-white text-xs font-semibold">Swatch {activeColorIdx + 1}</span>
+                          {clampedColors.length > minColors && wallpaperType !== "bilinear" && (
+                            <button
+                              onClick={() => removeColor(activeColorIdx)}
+                              className="p-1 rounded hover:bg-white/10 text-white/40 hover:text-red-400 transition-colors"
+                              title="remove swatch"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                         
                         {/* Hex text input */}
@@ -510,7 +519,7 @@ export default function MobileControlSheet({
                           }}
                           className="w-20 bg-white/5 border border-white/10 rounded px-2 py-0.5 text-xs text-white font-mono uppercase focus:outline-none focus:border-orange-500/80 text-center"
                           maxLength={7}
-                          placeholder="#HEX"
+                          placeholder="#hex"
                         />
                       </div>
 
@@ -519,7 +528,7 @@ export default function MobileControlSheet({
                         {/* 1. Hue Slider */}
                         <div className="space-y-1">
                           <div className="flex justify-between text-[10px] text-white/45 font-mono">
-                            <span>Hue</span>
+                            <span>hue</span>
                             <span>{h}°</span>
                           </div>
                           <input
@@ -539,7 +548,7 @@ export default function MobileControlSheet({
                         {/* 2. Saturation Slider */}
                         <div className="space-y-1">
                           <div className="flex justify-between text-[10px] text-white/45 font-mono">
-                            <span>Saturation</span>
+                            <span>saturation</span>
                             <span>{s}%</span>
                           </div>
                           <input
@@ -559,7 +568,7 @@ export default function MobileControlSheet({
                         {/* 3. Lightness Slider */}
                         <div className="space-y-1">
                           <div className="flex justify-between text-[10px] text-white/45 font-mono">
-                            <span>Lightness</span>
+                            <span>lightness</span>
                             <span>{l}%</span>
                           </div>
                           <input
@@ -589,10 +598,10 @@ export default function MobileControlSheet({
                             setActiveColorIdx(0);
                           }}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/35 active:bg-orange-500/20 text-xs text-orange-300 font-semibold"
-                          title="Generate 6-color gradient based on this color"
+                          title="generate 6-color gradient based on this color"
                         >
                           <Palette className="w-3.5 h-3.5" />
-                          <span>Auto-Gen 6 Colors</span>
+                          <span>auto-gen 6 colors</span>
                         </motion.button>
                       ) : <div />}
 
@@ -602,13 +611,13 @@ export default function MobileControlSheet({
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-xs text-white/80 active:bg-white/15 font-medium"
                       >
                         <Shuffle className="w-3.5 h-3.5" />
-                        <span>Randomize All</span>
+                        <span>randomize all</span>
                       </motion.button>
                     </div>
 
                     {/* Presets */}
                     <div>
-                      <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono mb-2">Preset Themes</p>
+                      <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono mb-2">preset themes</p>
                       <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto pr-1">
                         {Object.entries(presets).map(([name, themeColors]) => (
                           <motion.button
@@ -635,7 +644,7 @@ export default function MobileControlSheet({
                     {/* Recent Colors (Edit Active Swatch) */}
                     {recentColors.length > 0 && (
                       <div>
-                        <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono mb-2">Quick Select Recents</p>
+                        <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono mb-2">quick select recents</p>
                         <div className="flex flex-wrap gap-2">
                           {recentColors.map((color, i) => (
                             <motion.button
@@ -660,8 +669,8 @@ export default function MobileControlSheet({
                     {/* Smart Dark Overlay Toggle */}
                     <div className="flex items-center justify-between bg-white/5 p-3.5 rounded-2xl border border-white/5">
                       <div className="flex flex-col">
-                        <span className="text-white text-xs font-semibold">Smart Dark Overlay</span>
-                        <span className="text-[10px] text-white/40 mt-0.5">Apply rich indigo vignette overlay</span>
+                        <span className="text-white text-xs font-semibold">smart dark overlay</span>
+                        <span className="text-[10px] text-white/40 mt-0.5">apply rich indigo vignette overlay</span>
                       </div>
                       <Switch
                         checked={darkify}
@@ -673,8 +682,8 @@ export default function MobileControlSheet({
                     {/* Live Motion Status */}
                     <div className="flex items-center justify-between bg-white/5 p-3.5 rounded-2xl border border-white/5">
                       <div className="flex flex-col">
-                        <span className="text-white text-xs font-semibold">Continuous Movement</span>
-                        <span className="text-[10px] text-white/40 mt-0.5">Let background drift dynamically</span>
+                        <span className="text-white text-xs font-semibold">continuous movement</span>
+                        <span className="text-[10px] text-white/40 mt-0.5">let background drift dynamically</span>
                       </div>
                       <Switch
                         checked={animateBg}
@@ -687,7 +696,7 @@ export default function MobileControlSheet({
                     {animateBg && (
                       <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-white/60">Movement Speed</span>
+                          <span className="text-xs text-white/60">movement speed</span>
                           <span className="text-xs text-orange-400 font-mono font-semibold">{animationSpeed.toFixed(1)}x</span>
                         </div>
                         <Slider
@@ -705,7 +714,7 @@ export default function MobileControlSheet({
                       <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-3">
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-white/60">
-                            {wallpaperType === "twisted" ? "Twist Amount" : "Complexity"}
+                            {wallpaperType === "twisted" ? "twist amount" : "complexity"}
                           </span>
                           <span className="text-xs text-orange-400 font-mono font-semibold">{twist}</span>
                         </div>
@@ -723,8 +732,8 @@ export default function MobileControlSheet({
                     <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="flex flex-col">
-                          <span className="text-xs text-white/60 font-semibold">Film Grain</span>
-                          <span className="text-[9px] text-white/30">Add a textured analog feel</span>
+                          <span className="text-xs text-white/60 font-semibold">film grain</span>
+                          <span className="text-[9px] text-white/30">add a textured analog feel</span>
                         </div>
                         <Switch
                           checked={addGrain}
@@ -736,7 +745,7 @@ export default function MobileControlSheet({
                       {addGrain && (
                         <div className="space-y-3 pt-1 border-t border-white/5">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-white/40">Grain Intensity</span>
+                            <span className="text-xs text-white/40">grain intensity</span>
                             <span className="text-xs text-white/60 font-mono">{grainIntensity}%</span>
                           </div>
                           <Slider
@@ -757,7 +766,7 @@ export default function MobileControlSheet({
                   <div className="space-y-5">
                     {/* Resolution Selection */}
                     <div>
-                      <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono mb-3">Target Resolution</p>
+                      <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono mb-3">target resolution</p>
                       <div className="grid grid-cols-2 gap-2">
                         {resolutions.map((res) => (
                           <button
@@ -775,7 +784,7 @@ export default function MobileControlSheet({
                         ))}
                       </div>
                       <p className="text-[9px] text-white/30 font-mono mt-2.5 text-center">
-                        Note: Wallpaper will render at this high resolution on download.
+                        note: wallpaper will render at this high resolution on download.
                       </p>
                     </div>
 
@@ -788,7 +797,7 @@ export default function MobileControlSheet({
                         className="w-full py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-pink-500 text-white text-sm font-semibold shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 hover:opacity-95 disabled:opacity-50"
                       >
                         <Download className="w-4.5 h-4.5" />
-                        <span>Save High-Res Wallpaper</span>
+                        <span>save high-res wallpaper</span>
                       </motion.button>
                     </div>
                   </div>

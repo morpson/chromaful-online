@@ -86,8 +86,12 @@
     @apply border-border outline-ring/50;
   }
 
-  body {
-    @apply bg-background text-foreground font-body;
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    background-color: #000000;
+    color: hsl(var(--foreground));
+    font-family: var(--font-body);
   }
 
   /* Responsive utility classes */

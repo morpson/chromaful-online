@@ -145,10 +145,10 @@ const TYPE_ICON_SHAPE = {
 };
 
 const TYPE_LABELS = {
-  solid: "Solid Color", linear: "Linear Gradient", radial: "Radial Gradient",
-  conic: "Conic Gradient", bilinear: "Bilinear Gradient", plasma: "Plasma",
-  noise: "Blurred Noise", voronoi: "Voronoi", stripes: "Stripes",
-  isolines: "Isolines", flowfield: "Flow Field", twisted: "Twisted Gradient",
+  solid: "solid color", linear: "linear gradient", radial: "radial gradient",
+  conic: "conic gradient", bilinear: "bilinear gradient", plasma: "plasma",
+  noise: "blurred noise", voronoi: "voronoi", stripes: "stripes",
+  isolines: "isolines", flowfield: "flow field", twisted: "twisted gradient",
 };
 
 function randomHex() {
@@ -285,7 +285,7 @@ export default function UnifiedControlPanel({
             </div>
             <div className="pr-4 pl-1 flex flex-col">
               <span className="text-white text-xs font-bold font-sans">chromaful</span>
-              <span className="text-[9px] text-white/40 font-mono">Tap to Expand</span>
+              <span className="text-[9px] text-white/40 font-mono">tap to expand</span>
             </div>
             <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 mr-1 shadow-sm">
               <Maximize2 className="w-3.5 h-3.5" />
@@ -322,7 +322,7 @@ export default function UnifiedControlPanel({
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsMinimized(true)}
                 className="w-7 h-7 rounded-full bg-white/10 text-white/70 hover:bg-white/15 hover:text-white flex items-center justify-center transition-colors"
-                title="Minimize Panel"
+                title="minimize panel"
               >
                 <Minimize2 className="w-3.5 h-3.5" />
               </motion.button>
@@ -339,7 +339,7 @@ export default function UnifiedControlPanel({
                 >
                   <span className="flex items-center gap-1.5">
                     <Grid className="w-3.5 h-3.5 text-orange-400" />
-                    1. Wallpaper Style
+                    1. wallpaper style
                   </span>
                   {stylesOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </button>
@@ -388,7 +388,7 @@ export default function UnifiedControlPanel({
                 >
                   <span className="flex items-center gap-1.5">
                     <Palette className="w-3.5 h-3.5 text-orange-400" />
-                    2. Palette & Custom Colors
+                    2. palette & custom colors
                   </span>
                   {colorsOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </button>
@@ -404,8 +404,8 @@ export default function UnifiedControlPanel({
                     >
                       {/* Active Swatches Row */}
                       <div>
-                        <span className="text-[9px] text-white/40 uppercase font-mono tracking-wider">Select Swatch to Edit</span>
-                        <div className="flex items-center gap-2.5 overflow-x-auto pb-1 mt-1.5 scrollbar-none min-h-[48px]">
+                        <span className="text-[9px] text-white/40 uppercase font-mono tracking-wider">select swatch to edit</span>
+                        <div className="flex items-center gap-2.5 overflow-x-auto py-2 px-1 mt-1.5 scrollbar-none min-h-[56px]">
                           {clampedColors.map((color, idx) => {
                             const isActive = activeColorIdx === idx;
                             return (
@@ -432,7 +432,7 @@ export default function UnifiedControlPanel({
                                       e.stopPropagation();
                                       removeColor(idx);
                                     }}
-                                    className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center shadow shadow-black/30 border border-white/10 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity active:scale-90"
+                                    className="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center shadow shadow-black/30 border border-white/10 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:scale-110 active:scale-90"
                                   >
                                     <Trash2 className="w-2.5 h-2.5 text-white" />
                                   </button>
@@ -461,7 +461,16 @@ export default function UnifiedControlPanel({
                         <div className="flex items-center justify-between pb-2 border-b border-white/5">
                           <div className="flex items-center gap-2">
                             <div className="w-7 h-7 rounded-lg shadow border border-white/10" style={{ backgroundColor: activeColor }} />
-                            <span className="text-white text-xs font-semibold">Swatch {activeColorIdx + 1}</span>
+                            <span className="text-white text-xs font-semibold">swatch {activeColorIdx + 1}</span>
+                            {clampedColors.length > minColors && wallpaperType !== "bilinear" && (
+                              <button
+                                onClick={() => removeColor(activeColorIdx)}
+                                className="p-1 rounded hover:bg-white/10 text-white/40 hover:text-red-400 transition-colors"
+                                title="Remove Swatch"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </div>
                           
                           {/* Hex text input */}
@@ -477,7 +486,7 @@ export default function UnifiedControlPanel({
                             }}
                             className="w-20 bg-white/5 border border-white/10 rounded px-2 py-0.5 text-[10px] text-white font-mono uppercase focus:outline-none focus:border-orange-500/80 text-center"
                             maxLength={7}
-                            placeholder="#HEX"
+                            placeholder="#hex"
                           />
                         </div>
 
@@ -486,7 +495,7 @@ export default function UnifiedControlPanel({
                           {/* 1. Hue Slider */}
                           <div className="space-y-1">
                             <div className="flex justify-between text-[9px] text-white/45 font-mono">
-                              <span>Hue</span>
+                              <span>hue</span>
                               <span>{h}°</span>
                             </div>
                             <input
@@ -506,7 +515,7 @@ export default function UnifiedControlPanel({
                           {/* 2. Saturation Slider */}
                           <div className="space-y-1">
                             <div className="flex justify-between text-[9px] text-white/45 font-mono">
-                              <span>Saturation</span>
+                              <span>saturation</span>
                               <span>{s}%</span>
                             </div>
                             <input
@@ -526,7 +535,7 @@ export default function UnifiedControlPanel({
                           {/* 3. Lightness Slider */}
                           <div className="space-y-1">
                             <div className="flex justify-between text-[9px] text-white/45 font-mono">
-                              <span>Lightness</span>
+                              <span>lightness</span>
                               <span>{l}%</span>
                             </div>
                             <input
@@ -556,10 +565,10 @@ export default function UnifiedControlPanel({
                               setActiveColorIdx(0);
                             }}
                             className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/35 hover:bg-orange-500/20 text-[10px] text-orange-300 font-semibold"
-                            title="Generate 6-color gradient based on this color"
+                            title="generate 6-color gradient based on this color"
                           >
                             <Palette className="w-3 h-3" />
-                            <span>Auto-Gen 6 Colors</span>
+                            <span>auto-gen 6 colors</span>
                           </motion.button>
                         ) : <div />}
 
@@ -569,13 +578,13 @@ export default function UnifiedControlPanel({
                           className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-[10px] text-white/80 hover:bg-white/15 font-medium"
                         >
                           <Shuffle className="w-3 h-3" />
-                          <span>Randomize All</span>
+                          <span>randomize all</span>
                         </motion.button>
                       </div>
 
                       {/* Presets Grid */}
                       <div>
-                        <span className="text-[9px] text-white/40 uppercase font-mono tracking-wider">Preset Themes</span>
+                        <span className="text-[9px] text-white/40 uppercase font-mono tracking-wider">preset themes</span>
                         <div className="flex flex-wrap gap-1.5 mt-1.5 max-h-[88px] overflow-y-auto pr-1">
                           {Object.entries(presets).map(([name, themeColors]) => (
                             <button
@@ -601,7 +610,7 @@ export default function UnifiedControlPanel({
                       {/* Recents (Edit Active Swatch) */}
                       {recentColors.length > 0 && (
                         <div>
-                          <span className="text-[9px] text-white/40 uppercase font-mono tracking-wider">Quick Select Recents</span>
+                          <span className="text-[9px] text-white/40 uppercase font-mono tracking-wider">quick select recents</span>
                           <div className="flex flex-wrap gap-1.5 mt-1.5">
                             {recentColors.map((color, i) => (
                               <button
@@ -628,7 +637,7 @@ export default function UnifiedControlPanel({
                 >
                   <span className="flex items-center gap-1.5">
                     <Sliders className="w-3.5 h-3.5 text-orange-400" />
-                    3. Performance & Motion
+                    3. performance & motion
                   </span>
                   {tweaksOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </button>
@@ -645,8 +654,8 @@ export default function UnifiedControlPanel({
                       {/* Smart Dark Overlay Toggle */}
                       <div className="flex items-center justify-between bg-white/5 p-2.5 rounded-xl border border-white/5">
                         <div className="flex flex-col">
-                          <span className="text-white text-xs font-semibold">Smart Dark Overlay</span>
-                          <span className="text-[9px] text-white/40">Apply rich indigo vignette overlay</span>
+                          <span className="text-white text-xs font-semibold">smart dark overlay</span>
+                          <span className="text-[9px] text-white/40">apply rich indigo vignette overlay</span>
                         </div>
                         <Switch
                           checked={darkify}
@@ -658,8 +667,8 @@ export default function UnifiedControlPanel({
                       {/* Live Animation Toggle */}
                       <div className="flex items-center justify-between bg-white/5 p-2.5 rounded-xl border border-white/5">
                         <div className="flex flex-col">
-                          <span className="text-white text-xs font-semibold">Continuous Movement</span>
-                          <span className="text-[9px] text-white/40">Drifts wallpaper dynamically</span>
+                          <span className="text-white text-xs font-semibold">continuous movement</span>
+                          <span className="text-[9px] text-white/40">drifts wallpaper dynamically</span>
                         </div>
                         <Switch
                           checked={animateBg}
@@ -672,7 +681,7 @@ export default function UnifiedControlPanel({
                       {animateBg && (
                         <div className="bg-white/5 p-3 rounded-xl border border-white/5 space-y-2.5">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-white/60">Motion Speed</span>
+                            <span className="text-xs text-white/60">motion speed</span>
                             <span className="text-xs text-orange-400 font-mono font-semibold">{animationSpeed.toFixed(1)}x</span>
                           </div>
                           <Slider
@@ -687,14 +696,14 @@ export default function UnifiedControlPanel({
 
                       {/* Reset Motion Position */}
                       <div className="flex items-center justify-between bg-white/5 p-2.5 rounded-xl border border-white/5">
-                        <span className="text-xs text-white/60 font-semibold">Reset Animation Position</span>
+                        <span className="text-xs text-white/60 font-semibold">reset animation position</span>
                         <motion.button
                           whileTap={{ scale: 0.95 }}
                           onClick={onResetMotion}
                           className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/15 text-[10px] text-white/90"
                         >
                           <Undo2 className="w-3 h-3" />
-                          <span>Reset Position</span>
+                          <span>reset position</span>
                         </motion.button>
                       </div>
 
@@ -703,7 +712,7 @@ export default function UnifiedControlPanel({
                         <div className="bg-white/5 p-3 rounded-xl border border-white/5 space-y-2.5">
                           <div className="flex items-center justify-between">
                             <span className="text-xs text-white/60">
-                              {wallpaperType === "twisted" ? "Twist Amount" : "Complexity"}
+                              {wallpaperType === "twisted" ? "twist amount" : "complexity"}
                             </span>
                             <span className="text-xs text-orange-400 font-mono font-semibold">{twist}</span>
                           </div>
@@ -721,8 +730,8 @@ export default function UnifiedControlPanel({
                       <div className="bg-white/5 p-3 rounded-xl border border-white/5 space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="flex flex-col">
-                            <span className="text-xs text-white/60 font-semibold">Film Grain</span>
-                            <span className="text-[9px] text-white/30">Add static texture</span>
+                            <span className="text-xs text-white/60 font-semibold">film grain</span>
+                            <span className="text-[9px] text-white/30">add static texture</span>
                           </div>
                           <Switch
                             checked={addGrain}
@@ -734,7 +743,7 @@ export default function UnifiedControlPanel({
                         {addGrain && (
                           <div className="space-y-2 pt-2 border-t border-white/5">
                             <div className="flex items-center justify-between">
-                              <span className="text-xs text-white/40 font-semibold">Grain Intensity</span>
+                              <span className="text-xs text-white/40 font-semibold">grain intensity</span>
                               <span className="text-xs text-white/60 font-mono">{grainIntensity}%</span>
                             </div>
                             <Slider
@@ -760,7 +769,7 @@ export default function UnifiedControlPanel({
                 >
                   <span className="flex items-center gap-1.5">
                     <Download className="w-3.5 h-3.5 text-orange-400" />
-                    4. Export Options
+                    4. export options
                   </span>
                   {exportOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </button>
@@ -775,7 +784,7 @@ export default function UnifiedControlPanel({
                       className="overflow-hidden mt-3 space-y-4.5"
                     >
                       <div>
-                        <span className="text-[9px] text-white/40 uppercase font-mono tracking-wider">Resolution</span>
+                        <span className="text-[9px] text-white/40 uppercase font-mono tracking-wider">resolution</span>
                         <div className="grid grid-cols-2 gap-1.5 mt-1.5">
                           {resolutions.map((res) => (
                             <button
@@ -803,7 +812,7 @@ export default function UnifiedControlPanel({
                           className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-400 text-white text-xs font-semibold shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 hover:opacity-95 disabled:opacity-50"
                         >
                           <Download className="w-3.5 h-3.5" />
-                          <span>Generate & Download</span>
+                          <span>generate & download</span>
                         </motion.button>
                       </div>
                     </motion.div>
