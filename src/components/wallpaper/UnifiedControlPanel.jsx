@@ -284,7 +284,7 @@ export default function UnifiedControlPanel({
               <img src="/logo.png" className="w-8 h-8 object-contain" alt="Logo" />
             </div>
             <div className="pr-4 pl-1 flex flex-col">
-              <span className="text-white text-xs font-bold font-sans">Chromaful</span>
+              <span className="text-white text-xs font-bold font-sans">chromaful</span>
               <span className="text-[9px] text-white/40 font-mono">Tap to Expand</span>
             </div>
             <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 mr-1 shadow-sm">
@@ -315,7 +315,7 @@ export default function UnifiedControlPanel({
                   <img src="/logo.png" className="w-7 h-7 object-contain" alt="Logo" />
                 </div>
                 <div>
-                  <h2 className="text-white font-bold text-sm tracking-tight">Chromaful</h2>
+                  <h2 className="text-white font-bold text-sm tracking-tight">chromaful</h2>
                 </div>
               </div>
               <motion.button

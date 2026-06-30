@@ -360,7 +360,7 @@ export default function MobileControlSheet({
                 <div>
                   <h3 className="text-white font-bold text-base tracking-tight flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-orange-400" />
-                    Chromaful Designer
+                    chromaful Designer
                   </h3>
                   <p className="text-[10px] text-white/40 font-mono mt-0.5">Customize your dynamic wallpaper</p>
                 </div>
