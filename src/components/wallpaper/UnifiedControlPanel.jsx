@@ -260,7 +260,7 @@ export default function UnifiedControlPanel({
   const showTwist = ["twisted", "plasma", "flowfield", "isolines"].includes(wallpaperType);
 
   return (
-    <div className="fixed top-6 right-6 z-30 pointer-events-none flex flex-col items-end">
+    <div className="fixed top-3 right-3 md:top-6 md:right-6 z-30 pointer-events-none flex flex-col items-end">
       <AnimatePresence mode="wait">
         
         {/* MINIMIZED LOGO BUBBLE */}
@@ -300,7 +300,7 @@ export default function UnifiedControlPanel({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 15 }}
             transition={{ type: "spring", damping: 25, stiffness: 220 }}
-            className="pointer-events-auto w-[350px] rounded-[24px] border border-white/20 shadow-2xl flex flex-col overflow-hidden select-none max-h-[90vh]"
+            className="pointer-events-auto w-[320px] md:w-[350px] rounded-[20px] md:rounded-[24px] border border-white/20 shadow-2xl flex flex-col overflow-hidden select-none max-h-[calc(100dvh-1.5rem)] md:max-h-[calc(100dvh-3rem)]"
             style={{
               background: "rgba(15, 15, 15, 0.55)",
               backdropFilter: "blur(24px)",
