@@ -80,10 +80,31 @@ function hslToHex(h, s, l) {
   return `#${rHex}${gHex}${bHex}`.toUpperCase();
 }
 
+// Generate 6 colors with HSL shifts that make a beautiful gradient.
+function generate6ColorPalette(baseHex) {
+  const { h, s, l } = hexToHsl(baseHex);
+  const result = [];
+  
+  for (let i = 0; i < 6; i++) {
+    // Hue shift: shift hue, centered around base hue
+    const newH = (h - 45 + i * 18 + 360) % 360;
+    // Saturation shift: soft peak in the middle
+    const satOffset = -Math.abs(2.5 - i) * 4;
+    const newS = Math.max(20, Math.min(100, s + satOffset));
+    // Lightness gradient: progressive change from darker to lighter
+    const newL = Math.max(10, Math.min(90, l - 18 + i * 7));
+    
+    result.push(hslToHex(newH, newS, newL));
+  }
+  return result;
+}
+
+
+
 const MAX_COLORS = {
-  solid: 1, linear: 5, radial: 5, conic: 5,
-  bilinear: 4, plasma: 4, noise: 3, voronoi: 5,
-  stripes: 5, isolines: 3, flowfield: 3, twisted: 5,
+  solid: 1, linear: 6, radial: 6, conic: 6,
+  bilinear: 4, plasma: 6, noise: 6, voronoi: 6,
+  stripes: 6, isolines: 6, flowfield: 6, twisted: 6,
 };
 const MIN_COLORS = {
   solid: 1, linear: 2, radial: 2, conic: 2,
@@ -159,6 +180,8 @@ export default function MobileControlSheet({
   animationSpeed,
   setAnimationSpeed,
   wallpaperTypes,
+  darkify,
+  setDarkify
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("styles"); // styles, colors, adjust, export
@@ -184,6 +207,8 @@ export default function MobileControlSheet({
       setActiveColorIdx(Math.max(0, clampedColors.length - 1));
     }
   }, [clampedColors.length, activeColorIdx]);
+
+
 
   const updateColor = (idx, val) => {
     const next = [...clampedColors];
@@ -245,12 +270,12 @@ export default function MobileControlSheet({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-full shadow-2xl border border-white/10 w-[92vw] max-w-sm"
+            className="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-full shadow-2xl border border-white/20 w-[92vw] max-w-sm"
             style={{
-              background: "rgba(18, 14, 30, 0.75)",
+              background: "rgba(15, 15, 15, 0.65)",
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
-              boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.47)",
+              boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.25)",
             }}
           >
             {/* Play/Pause Button */}
@@ -319,12 +344,12 @@ export default function MobileControlSheet({
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="fixed inset-x-0 bottom-0 rounded-t-[32px] border-t border-white/12 z-30 pointer-events-auto flex flex-col max-h-[82vh] overflow-hidden"
+              className="fixed inset-x-0 bottom-0 rounded-t-[32px] border-t border-white/20 z-30 pointer-events-auto flex flex-col max-h-[82vh] overflow-hidden"
               style={{
-                background: "rgba(22, 17, 36, 0.85)",
+                background: "rgba(15, 15, 15, 0.55)",
                 backdropFilter: "blur(24px)",
                 WebkitBackdropFilter: "blur(24px)",
-                boxShadow: "0 -10px 40px rgba(0, 0, 0, 0.5)",
+                boxShadow: "0 -10px 40px rgba(0, 0, 0, 0.3)",
               }}
             >
               {/* Drag Handle Indicator */}
@@ -554,11 +579,27 @@ export default function MobileControlSheet({
                     </div>
 
                     {/* Control row */}
-                    <div className="flex justify-end mt-1.5">
+                    <div className="flex justify-between items-center mt-1.5 select-none">
+                      {wallpaperType !== "solid" && wallpaperType !== "bilinear" ? (
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => {
+                            const newPalette = generate6ColorPalette(activeColor);
+                            setColors(newPalette);
+                            setActiveColorIdx(0);
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/35 active:bg-orange-500/20 text-xs text-orange-300 font-semibold"
+                          title="Generate 6-color gradient based on this color"
+                        >
+                          <Palette className="w-3.5 h-3.5" />
+                          <span>Auto-Gen 6 Colors</span>
+                        </motion.button>
+                      ) : <div />}
+
                       <motion.button
                         whileTap={{ scale: 0.95 }}
                         onClick={randomize}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-xs text-white/80 active:bg-white/15"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-xs text-white/80 active:bg-white/15 font-medium"
                       >
                         <Shuffle className="w-3.5 h-3.5" />
                         <span>Randomize All</span>
@@ -609,12 +650,26 @@ export default function MobileControlSheet({
                         </div>
                       </div>
                     )}
+
                   </div>
                 )}
 
                 {/* 3. TWEAK TAB */}
                 {activeTab === "adjust" && (
                   <div className="space-y-5">
+                    {/* Smart Dark Overlay Toggle */}
+                    <div className="flex items-center justify-between bg-white/5 p-3.5 rounded-2xl border border-white/5">
+                      <div className="flex flex-col">
+                        <span className="text-white text-xs font-semibold">Smart Dark Overlay</span>
+                        <span className="text-[10px] text-white/40 mt-0.5">Apply rich indigo vignette overlay</span>
+                      </div>
+                      <Switch
+                        checked={darkify}
+                        onCheckedChange={setDarkify}
+                        className="data-[state=checked]:bg-orange-500"
+                      />
+                    </div>
+
                     {/* Live Motion Status */}
                     <div className="flex items-center justify-between bg-white/5 p-3.5 rounded-2xl border border-white/5">
                       <div className="flex flex-col">

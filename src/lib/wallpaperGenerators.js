@@ -180,11 +180,12 @@ function drawPlasma(ctx, w, h, rgbColors, complexity = 100, time = 0) {
 }
 
 function drawNoise(ctx, w, h, rgbColors, time = 0) {
+  const sFactor = Math.max(0.1, w / 1000);
   const imageData = ctx.createImageData(w, h);
   const data = imageData.data;
-  const scale = 0.005;
-  const dx = Math.sin(time * 0.08) * 15;
-  const dy = time * 4.0; // Slow continuous drifting downwards
+  const scale = 0.005 / sFactor;
+  const dx = Math.sin(time * 0.08) * 15 * sFactor;
+  const dy = time * 4.0 * sFactor; // Slow continuous drifting downwards
   function pseudoNoise(x, y) {
     const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
     return n - Math.floor(n);
@@ -218,7 +219,7 @@ function drawNoise(ctx, w, h, rgbColors, time = 0) {
     }
   }
   ctx.putImageData(imageData, 0, 0);
-  ctx.filter = "blur(2px)";
+  ctx.filter = `blur(${Math.max(0.5, 2 * sFactor)}px)`;
   ctx.drawImage(ctx.canvas, 0, 0);
   ctx.filter = "none";
 }
@@ -261,6 +262,7 @@ function drawVoronoi(ctx, w, h, rgbColors, time = 0) {
 }
 
 function drawStripes(ctx, w, h, colors, time = 0) {
+  const sFactor = Math.max(0.1, w / 1000);
   const stripeCount = 8;
   const yOffset = Math.sin(time * 0.4) * (h / stripeCount);
   for (let i = -1; i <= stripeCount; i++) {
@@ -268,13 +270,14 @@ function drawStripes(ctx, w, h, colors, time = 0) {
     ctx.fillStyle = color;
     ctx.fillRect(0, (i / stripeCount) * h + yOffset, w, h / stripeCount + 2);
   }
-  ctx.filter = "blur(3px)";
+  ctx.filter = `blur(${Math.max(0.5, 3 * sFactor)}px)`;
   ctx.drawImage(ctx.canvas, 0, 0);
   ctx.filter = "none";
 }
 
 function drawIsolines(ctx, w, h, colors, complexity = 100, time = 0) {
-  const scale = 0.003 + (complexity / 100) * 0.005;
+  const sFactor = Math.max(0.1, w / 1000);
+  const scale = (0.003 + (complexity / 100) * 0.005) / sFactor;
   const imageData = ctx.createImageData(w, h);
   const data = imageData.data;
   const bgColor = hexToRgb(colors[0]);
@@ -286,14 +289,15 @@ function drawIsolines(ctx, w, h, colors, complexity = 100, time = 0) {
 
   // Draw contour lines
   const bands = 15;
+  const step = Math.max(1, Math.round(5 * sFactor));
   for (let b = 0; b < bands; b++) {
     const threshold = b / bands;
     ctx.beginPath();
     ctx.strokeStyle = colors[1 + (b % (colors.length - 1))] || colors[colors.length - 1];
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.5 * sFactor;
     ctx.globalAlpha = 0.6;
-    for (let x = 0; x < w; x += 5) { // increased step size from 3 to 5 for major speedup on mobile
-      for (let y = 0; y < h; y += 5) {
+    for (let x = 0; x < w; x += step) {
+      for (let y = 0; y < h; y += step) {
         const nx = x * scale, ny = y * scale;
         const v = (Math.sin(nx * 3 + time * 0.4) + Math.sin(ny * 2 + nx + time * 0.2) + Math.sin(Math.sqrt(nx * nx + ny * ny) - time * 0.15)) / 3;
         const t = (v + 1) / 2;
@@ -310,6 +314,7 @@ function drawIsolines(ctx, w, h, colors, complexity = 100, time = 0) {
 }
 
 function drawFlowField(ctx, w, h, colors, complexity = 100, time = 0) {
+  const sFactor = Math.max(0.1, w / 1000);
   // Background gradient
   const grad = ctx.createLinearGradient(0, 0, w, h);
   grad.addColorStop(0, colors[0]);
@@ -317,12 +322,12 @@ function drawFlowField(ctx, w, h, colors, complexity = 100, time = 0) {
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
 
-  const scale = 0.002 + (complexity / 100) * 0.003;
+  const scale = (0.002 + (complexity / 100) * 0.003) / sFactor;
   const numLines = 150;
-  const stepLen = 5;
+  const stepLen = 5 * sFactor;
   const steps = 60;
 
-  ctx.lineWidth = 0.8;
+  ctx.lineWidth = 0.8 * sFactor;
   ctx.globalAlpha = 0.5;
 
   for (let i = 0; i < numLines; i++) {
@@ -391,7 +396,7 @@ export function generateWallpaper(ctx, w, h, type, colors, options = {}) {
       throw new Error('No colors provided');
     }
 
-    const { addGrain = false, grainIntensity = 30, twist = 100, time = 0 } = options;
+    const { addGrain = false, grainIntensity = 30, twist = 100, time = 0, darkify = false } = options;
 
     // Clamp slider values
     const clampedTwist = Math.max(0, Math.min(200, twist));
@@ -420,6 +425,10 @@ export function generateWallpaper(ctx, w, h, type, colors, options = {}) {
       default:          drawLinear(ctx, w, h, safeColors, time);
     }
 
+    if (darkify) {
+      applyDarkify(ctx, w, h);
+    }
+
     if (addGrain && clampedGrainIntensity > 0) {
       applyGrain(ctx, w, h, clampedGrainIntensity);
     }
@@ -429,4 +438,23 @@ export function generateWallpaper(ctx, w, h, type, colors, options = {}) {
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(0, 0, w, h);
   }
+}
+
+// Smart dark overlay utilizing radial gradient and multiply blending
+function applyDarkify(ctx, w, h) {
+  ctx.save();
+  ctx.globalCompositeOperation = "multiply";
+  const grad = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, Math.sqrt(w*w + h*h)/2);
+  grad.addColorStop(0, "rgba(20, 20, 35, 0.45)");
+  grad.addColorStop(0.5, "rgba(10, 10, 22, 0.75)");
+  grad.addColorStop(1, "rgba(5, 5, 12, 0.96)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalCompositeOperation = "source-over";
+  ctx.fillStyle = "rgba(8, 8, 12, 0.28)";
+  ctx.fillRect(0, 0, w, h);
+  ctx.restore();
 }

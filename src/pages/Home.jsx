@@ -36,21 +36,63 @@ export const PRESET_THEMES = {
 
 export const RESOLUTIONS = ["1366×768", "1920×1080", "2560×1440", "3840×2160"];
 
+// Standalone HSL to Hex helper
+function hslToHex(h, s, l) {
+  s /= 100;
+  l /= 100;
+  let c = (1 - Math.abs(2 * l - 1)) * s;
+  let x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  let m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  if (0 <= h && h < 60) { r = c; g = x; b = 0; }
+  else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
+  else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
+  else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
+  else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
+  else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
+  let rHex = Math.round((r + m) * 255).toString(16).padStart(2, '0');
+  let gHex = Math.round((g + m) * 255).toString(16).padStart(2, '0');
+  let bHex = Math.round((b + m) * 255).toString(16).padStart(2, '0');
+  return `#${rHex}${gHex}${bHex}`.toUpperCase();
+}
+
+const INITIAL_TYPES = ["linear", "radial", "twisted", "bilinear", "plasma", "noise", "conic", "voronoi", "stripes", "isolines", "flowfield"];
+
+function getRandomWallpaperType() {
+  return INITIAL_TYPES[Math.floor(Math.random() * INITIAL_TYPES.length)];
+}
+
+function getRandomDarkColors() {
+  const baseH = Math.floor(Math.random() * 360);
+  const baseS = 65 + Math.floor(Math.random() * 25); // 65-90%
+  const colorsList = [];
+  for (let i = 0; i < 6; i++) {
+    const h = (baseH - 45 + i * 18 + 360) % 360;
+    const s = Math.max(40, Math.min(100, baseS - Math.abs(2.5 - i) * 4));
+    const l = 10 + Math.floor(Math.random() * 15); // 10% - 25% (somewhat dark)
+    colorsList.push(hslToHex(h, s, l));
+  }
+  return colorsList;
+}
+
 export default function Home() {
-  const [wallpaperType, setWallpaperType] = useState("radial");
-  const [colors, setColors] = useState(["#BEE9E8", "#D4ECD5", "#FCF6BD", "#FAF9F6"]);
+  const [wallpaperType, setWallpaperType] = useState(() => getRandomWallpaperType());
+  const [colors, setColors] = useState(() => getRandomDarkColors());
   const [resolution, setResolution] = useState("2560×1440");
   const [addGrain, setAddGrain] = useState(false);
   const [grainIntensity, setGrainIntensity] = useState(91);
   const [twist, setTwist] = useState(100);
   const [isGenerating, setIsGenerating] = useState(false);
   const [recentColors, setRecentColors] = useState([
-    "#BEE9E8", "#D4ECD5", "#FCF6BD", "#FAF9F6", "#A8DADC", "#E0F2FE", "#F3E7E4", "#D8F3DC"
+    "#1A1B35", "#2C1B4D", "#121324", "#3A1A5E", "#0A0B1A", "#1D203F", "#7B2FBE", "#5E60CE"
   ]);
 
   // Splash Screen Intro state
   const [showSplash, setShowSplash] = useState(true);
   const [showControls, setShowControls] = useState(false);
+
+  // Darkify smart dark overlay option state
+  const [darkify, setDarkify] = useState(false);
 
   // Mobile layout detection
   const [isMobile, setIsMobile] = useState(false);
@@ -63,10 +105,10 @@ export default function Home() {
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    // Hide splash screen after 4.5 seconds for a premium and calming reveal
-    const splashTimer = setTimeout(() => setShowSplash(false), 4500);
+    // Hide splash screen after 6.5 seconds to align with reversed video duration
+    const splashTimer = setTimeout(() => setShowSplash(false), 6500);
     // Fade in control panels shortly before splash ends
-    const controlsTimer = setTimeout(() => setShowControls(true), 3800);
+    const controlsTimer = setTimeout(() => setShowControls(true), 5800);
     return () => {
       clearTimeout(splashTimer);
       clearTimeout(controlsTimer);
@@ -132,14 +174,15 @@ export default function Home() {
         addGrain, 
         grainIntensity, 
         twist,
-        time: timeVal 
+        time: timeVal,
+        darkify
       });
     } catch (error) {
       console.error("Canvas generation error:", error);
     } finally {
       setIsGenerating(false);
     }
-  }, [wallpaperType, colors, resolution, addGrain, grainIntensity, twist, animateBg]);
+  }, [wallpaperType, colors, resolution, addGrain, grainIntensity, twist, animateBg, darkify]);
 
   // RequestAnimationFrame loop
   useEffect(() => {
@@ -211,7 +254,12 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0d0c15] relative">
+    <div 
+      className="flex h-screen overflow-hidden relative"
+      style={{
+        background: "radial-gradient(circle at center, #181628 0%, #0d0c15 100%)",
+      }}
+    >
       {/* Full-screen canvas as background */}
       <canvas
         ref={canvasRef}
@@ -254,6 +302,8 @@ export default function Home() {
                 animationSpeed={animationSpeed}
                 setAnimationSpeed={setAnimationSpeed}
                 wallpaperTypes={WALLPAPER_TYPES}
+                darkify={darkify}
+                setDarkify={setDarkify}
               />
             ) : (
               <UnifiedControlPanel
@@ -282,46 +332,50 @@ export default function Home() {
                 setAnimationSpeed={setAnimationSpeed}
                 wallpaperTypes={WALLPAPER_TYPES}
                 onResetMotion={handleResetMotion}
+                darkify={darkify}
+                setDarkify={setDarkify}
               />
             )}
 
-            {/* FLOATING CORNER MOTION CONTROLS (Bottom Right) */}
-            <div className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 pointer-events-auto select-none">
-              {/* Reset Motion Button */}
-              <motion.button
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.92 }}
-                onClick={handleResetMotion}
-                className="w-10 h-10 rounded-full border border-white/10 text-white/90 flex items-center justify-center shadow-lg transition-colors hover:bg-white/5"
-                style={{
-                  background: "rgba(18, 14, 30, 0.7)",
-                  backdropFilter: "blur(12px)",
-                  WebkitBackdropFilter: "blur(12px)",
-                }}
-                title="Reset Animation Position"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </motion.button>
+            {/* FLOATING CORNER MOTION CONTROLS (Bottom Left - Desktop Only) */}
+            {!isMobile && (
+              <div className="fixed bottom-6 left-6 z-40 flex items-center gap-2.5 pointer-events-auto select-none">
+                {/* Reset Motion Button */}
+                <motion.button
+                  whileHover={{ scale: 1.08 }}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={handleResetMotion}
+                  className="w-10 h-10 rounded-full border border-white/20 text-white/90 flex items-center justify-center shadow-lg transition-colors hover:bg-white/5"
+                  style={{
+                    background: "rgba(15, 15, 15, 0.55)",
+                    backdropFilter: "blur(12px)",
+                    WebkitBackdropFilter: "blur(12px)",
+                  }}
+                  title="Reset Animation Position"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </motion.button>
 
-              {/* Play/Pause Motion Button */}
-              <motion.button
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.92 }}
-                onClick={() => setAnimateBg(!animateBg)}
-                className={cn(
-                  "w-10 h-10 rounded-full border text-white flex items-center justify-center shadow-lg transition-colors",
-                  animateBg ? "bg-orange-500 border-orange-500/20 shadow-orange-500/20" : "border-white/10 hover:bg-white/5"
-                )}
-                style={{
-                  background: animateBg ? undefined : "rgba(18, 14, 30, 0.7)",
-                  backdropFilter: "blur(12px)",
-                  WebkitBackdropFilter: "blur(12px)",
-                }}
-                title={animateBg ? "Pause Animation" : "Play Animation"}
-              >
-                {animateBg ? <Pause className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white ml-0.5" />}
-              </motion.button>
-            </div>
+                {/* Play/Pause Motion Button */}
+                <motion.button
+                  whileHover={{ scale: 1.08 }}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => setAnimateBg(!animateBg)}
+                  className={cn(
+                    "w-10 h-10 rounded-full border text-white flex items-center justify-center shadow-lg transition-colors",
+                    animateBg ? "bg-orange-500 border-orange-500/20 shadow-orange-500/20" : "border-white/20 hover:bg-white/5"
+                  )}
+                  style={{
+                    background: animateBg ? undefined : "rgba(15, 15, 15, 0.55)",
+                    backdropFilter: "blur(12px)",
+                    WebkitBackdropFilter: "blur(12px)",
+                  }}
+                  title={animateBg ? "Pause Animation" : "Play Animation"}
+                >
+                  {animateBg ? <Pause className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white ml-0.5" />}
+                </motion.button>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -332,62 +386,26 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 1.0, ease: "easeInOut" } }}
-            className="fixed inset-0 z-50 flex flex-col items-center justify-center"
-            style={{
-              background: "radial-gradient(circle at center, #181628 0%, #0d0c15 100%)",
-            }}
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black"
           >
-            {/* Subtle light glow behind logo */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1.2, opacity: 0.35 }}
-              transition={{ duration: 2.0, ease: "easeOut" }}
-              className="absolute w-80 h-80 rounded-full bg-cyan-500/20 blur-3xl"
-            />
-            
             {/* Logo container */}
             <motion.div
-              initial={{ scale: 0.5, opacity: 0, y: 30 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: -20 }}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 1.05, opacity: 0 }}
               transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-              className="relative z-10 flex flex-col items-center gap-6"
+              className="relative z-10 flex flex-col items-center gap-6 w-full max-w-5xl px-4 md:px-8"
             >
-              {/* Large floating water droplet */}
-              <motion.img 
-                src="/logo.png" 
-                className="w-48 h-48 object-contain filter drop-shadow-[0_16px_48px_rgba(0,180,216,0.35)]" 
-                alt="Chromaful Logo" 
-                animate={{
-                  y: [0, -15, 0],
-                  scale: [1, 1.04, 1],
-                  filter: [
-                    "drop-shadow(0 16px 48px rgba(0,180,216,0.25))",
-                    "drop-shadow(0 24px 60px rgba(0,180,216,0.4))",
-                    "drop-shadow(0 16px 48px rgba(0,180,216,0.25))"
-                  ]
-                }}
-                transition={{
-                  duration: 4.5,
-                  ease: "easeInOut",
-                  repeat: Infinity,
-                  repeatType: "reverse"
-                }}
-              />
-              
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6, duration: 1.0, ease: "easeOut" }}
-                className="flex flex-col items-center"
-              >
-                <h1 className="text-white text-2xl font-bold tracking-[0.2em] uppercase font-sans">
-                  Chromaful
-                </h1>
-                <p className="text-white/40 text-[10px] tracking-[0.3em] font-mono mt-2 uppercase">
-                  Generative Wallpapers
-                </p>
-              </motion.div>
+              {/* Very large intro video */}
+              <div className="relative w-full aspect-[1050/410] bg-black">
+                <video
+                  src="/intro-reversed.mp4"
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </motion.div>
           </motion.div>
         )}
