@@ -3,11 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta property="og:title" content="Chromaful">
-    <meta property="og:description" content="Generate procedural gradient-style wallpapers">
+    <meta name="theme-color" content="#07060f">
+    
+    <!-- SEO Meta Tags -->
+    <title>Chromaful — Procedural Dynamic Wallpapers</title>
+    <meta name="description" content="An open-source dynamic wallpaper designer. Generate, animate, and download highly customizable procedural gradient backgrounds in resolutions up to 4K.">
+    <meta property="og:title" content="Chromaful — Procedural Dynamic Wallpapers">
+    <meta property="og:description" content="Generate, animate, and download procedural gradient wallpapers in resolutions up to 4K.">
     <meta property="og:url" content="https://chromaful.netlify.app/">
-    <title>Chromaful</title>
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://chromaful.netlify.app/og-image.jpg">
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <style>
+        :root {
+            --bg-color: #07060f;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --accent-orange: #ff6d00;
+            --accent-orange-hover: #ff8533;
+            --accent-cyan: #00b4d8;
+            --glass-bg: rgba(25, 22, 45, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-hover-border: rgba(255, 255, 255, 0.18);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -15,84 +40,739 @@
         }
 
         html, body {
-            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Ambient glowing background blobs */
+        .ambient-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(123, 47, 190, 0.15) 0%, rgba(0, 180, 216, 0.05) 50%, rgba(7, 6, 15, 0) 70%);
+            top: -200px;
+            right: -200px;
+            z-index: -1;
+            pointer-events: none;
+            filter: blur(80px);
+            animation: slow-drift 20s infinite alternate ease-in-out;
+        }
+
+        .ambient-glow-2 {
+            position: fixed;
+            width: 800px;
+            height: 800px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 109, 0, 0.08) 0%, rgba(123, 47, 190, 0.03) 50%, rgba(7, 6, 15, 0) 70%);
+            bottom: -300px;
+            left: -300px;
+            z-index: -1;
+            pointer-events: none;
+            filter: blur(100px);
+            animation: slow-drift-reverse 25s infinite alternate ease-in-out;
+        }
+
+        @keyframes slow-drift {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-80px, 80px) scale(1.1); }
+        }
+
+        @keyframes slow-drift-reverse {
+            0% { transform: translate(0, 0) scale(1.1); }
+            100% { transform: translate(100px, -60px) scale(0.9); }
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 6%;
+            max-width: 1400px;
+            margin: 0 auto;
             width: 100%;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .logo-img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            font-family: 'Lexend', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #fff 40%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-link-icon {
+            color: var(--text-secondary);
+            transition: color 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #ffffff;
-            color: #1a1a1a;
         }
 
-        .container {
-            max-width: 600px;
-            width: 100%;
-            padding: 40px 20px;
+        .nav-link-icon:hover {
+            color: var(--text-primary);
+        }
+
+        /* Hero Layout */
+        .hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 6% 60px 6%;
+            max-width: 1000px;
+            margin: 0 auto;
             text-align: center;
+            position: relative;
+        }
+
+        .badge {
+            background: rgba(255, 109, 0, 0.12);
+            border: 1px solid rgba(255, 109, 0, 0.3);
+            color: #ffaa66;
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
         h1 {
+            font-family: 'Lexend', sans-serif;
             font-size: 3.5rem;
-            font-weight: 700;
-            margin-bottom: 12px;
-            letter-spacing: -1px;
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -1.5px;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #ffffff, #dcd8fc 60%, #b2adfc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .subtitle {
-            font-size: 1rem;
-            color: #666;
-            margin-bottom: 48px;
+        .hero-desc {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            max-width: 680px;
+            margin-bottom: 40px;
             font-weight: 400;
         }
 
-        .preview {
-            width: 100%;
-            aspect-ratio: 16 / 9;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin-bottom: 40px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        .cta-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 60px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
-        .cta {
-            display: inline-block;
-            padding: 12px 28px;
-            background: #1a1a1a;
-            color: white;
+        .btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            font-size: 0.95rem;
+            font-weight: 600;
             text-decoration: none;
-            border-radius: 6px;
-            font-weight: 500;
-            font-size: 1rem;
-            transition: all 0.2s ease;
-            border: none;
+            border-radius: 12px;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             cursor: pointer;
         }
 
-        .cta:hover {
-            background: #333;
+        .btn-primary {
+            background: var(--accent-orange);
+            color: #ffffff;
+            box-shadow: 0 4px 20px rgba(255, 109, 0, 0.25);
         }
 
-        @media (max-width: 640px) {
+        .btn-primary:hover {
+            background: var(--accent-orange-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(255, 109, 0, 0.35);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary:active {
+            transform: translateY(0);
+        }
+
+        /* Mockup and Preview Canvas Frame */
+        .mockup-container {
+            width: 100%;
+            max-width: 960px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 12px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+            margin-bottom: 100px;
+            position: relative;
+        }
+
+        .mockup-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 12px 12px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .mockup-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .mockup-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .mockup-dot:nth-child(1) { background: #ff5f56; }
+        .mockup-dot:nth-child(2) { background: #ffbd2e; }
+        .mockup-dot:nth-child(3) { background: #27c93f; }
+
+        .mockup-title {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.35);
+            font-family: monospace;
+        }
+
+        .preview-frame {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            margin-top: 10px;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
+        }
+
+        #preview-canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Simulated Overlay element */
+        .overlay-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            background: radial-gradient(circle at center, rgba(20, 20, 35, 0.45) 0%, rgba(10, 10, 22, 0.75) 50%, rgba(5, 5, 12, 0.96) 100%), rgba(8, 8, 12, 0.28);
+            mix-blend-mode: multiply;
+        }
+
+        .overlay-active .overlay-layer {
+            opacity: 1;
+        }
+
+        .preview-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10;
+            background: rgba(15, 15, 15, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 8px 14px;
+            border-radius: 100px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .preview-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.8);
+            user-select: none;
+        }
+
+        /* Custom Toggle Switch for mockup darkify simulator */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 38px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background-color: rgba(255,255,255,0.15);
+            transition: .3s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-orange);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(18px);
+        }
+
+        /* Features Section */
+        .features-section {
+            padding: 40px 6% 120px 6%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-family: 'Lexend', sans-serif;
+            font-size: 2.25rem;
+            font-weight: 700;
+            letter-spacing: -0.75px;
+            margin-bottom: 12px;
+        }
+
+        .section-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-cols: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 32px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .feature-card:hover {
+            border-color: var(--glass-hover-border);
+            transform: translateY(-4px);
+            background: rgba(30, 26, 52, 0.55);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-card::before {
+            content: "";
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--accent-cyan);
+            opacity: 0;
+            top: -60px;
+            right: -60px;
+            filter: blur(40px);
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+
+        .feature-card:hover::before {
+            opacity: 0.15;
+        }
+
+        .feature-card:nth-child(even)::before {
+            background: var(--accent-orange);
+        }
+
+        .feature-icon-wrapper {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-cyan);
+        }
+
+        .feature-card:nth-child(even) .feature-icon-wrapper {
+            color: var(--accent-orange);
+        }
+
+        .feature-card-title {
+            font-family: 'Lexend', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+        }
+
+        .feature-card-desc {
+            font-size: 0.925rem;
+            color: var(--text-secondary);
+            line-height: 1.55;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding: 40px 6%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            text-align: center;
+        }
+
+        .footer-logo {
+            font-family: 'Lexend', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .copyright {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.3);
+            font-family: monospace;
+        }
+
+        @media (max-width: 768px) {
             h1 {
                 font-size: 2.5rem;
             }
-
-            .preview {
-                aspect-ratio: 1;
+            .hero-desc {
+                font-size: 1rem;
+            }
+            .features-grid {
+                grid-template-cols: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Chromaful</h1>
-        <p class="subtitle">Generate procedural gradient-style wallpapers</p>
-        <div class="preview"></div>
-        <a href="https://chromaful.netlify.app/" class="cta">Open App</a>
-    </div>
+
+    <!-- Glowing Background Lights -->
+    <div class="ambient-glow"></div>
+    <div class="ambient-glow-2"></div>
+
+    <!-- Header Navigation -->
+    <header>
+        <a href="#" class="logo">
+            <img src="/logo.png" alt="Chromaful logo" class="logo-img">
+            <span class="logo-text">Chromaful</span>
+        </a>
+        <div class="nav-links">
+            <a href="https://github.com/morpson/chromaful-online" target="_blank" class="nav-link-icon" title="View Source on GitHub">
+                <i data-lucide="github" style="width: 20px; height: 20px;"></i>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Hero -->
+    <main class="hero">
+        <div class="badge">
+            <i data-lucide="sparkles" style="width: 13px; height: 13px;"></i>
+            Procedural Canvas Engine
+        </div>
+        
+        <h1>Tailor-Made Wallpapers,<br>Flowing Procedurally</h1>
+        
+        <p class="hero-desc">
+            Chromaful is an open-source, web-based dynamic wallpaper designer. Generate organic visual gradients, customize HSL variations, animate coordinate offsets in real-time, and download crisp 4K pngs.
+        </p>
+
+        <div class="cta-group">
+            <a href="https://chromaful.netlify.app/" class="btn btn-primary">
+                Open Web App
+                <i data-lucide="external-link" style="width: 16px; height: 16px;"></i>
+            </a>
+            <a href="https://github.com/morpson/chromaful-online" target="_blank" class="btn btn-secondary">
+                <i data-lucide="github" style="width: 16px; height: 16px;"></i>
+                Star on GitHub
+            </a>
+        </div>
+
+        <!-- Simulated App Interface Preview -->
+        <div class="mockup-container">
+            <div class="mockup-header">
+                <div class="mockup-dots">
+                    <div class="mockup-dot"></div>
+                    <div class="mockup-dot"></div>
+                    <div class="mockup-dot"></div>
+                </div>
+                <div class="mockup-title">chromaful-online simulator</div>
+                <div style="width: 42px;"></div>
+            </div>
+            
+            <div class="preview-frame" id="mockup-frame">
+                <!-- Live canvas showing dynamic animation -->
+                <canvas id="preview-canvas"></canvas>
+                <!-- Multiply blend black layer for Darkify simulation -->
+                <div class="overlay-layer"></div>
+                
+                <!-- Floating simulation toggles -->
+                <div class="preview-controls">
+                    <span class="preview-label">Simulate Darkify</span>
+                    <label class="switch">
+                        <input type="checkbox" id="darkify-simulator">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Core Features Section -->
+    <section class="features-section" id="features">
+        <div class="section-header">
+            <h2 class="section-title">Engine Features</h2>
+            <p class="section-subtitle">Procedural wallpaper generation algorithms, customizable with direct canvas shaders.</p>
+        </div>
+
+        <div class="features-grid">
+            
+            <!-- Card 1: 11+ Styles -->
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <i data-lucide="grid" style="width: 20px; height: 20px;"></i>
+                </div>
+                <h3 class="feature-card-title">11+ Procedural Algorithms</h3>
+                <p class="feature-card-desc">
+                    Choose from solid, linear, radial, bilinear, plasma, conic, twisted, flow field, voronoi patterns, stripes, and isolines.
+                </p>
+            </div>
+
+            <!-- Card 2: 6-Color Palette Builder -->
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <i data-lucide="palette" style="width: 20px; height: 20px;"></i>
+                </div>
+                <h3 class="feature-card-title">6-Color Auto-Palette Builder</h3>
+                <p class="feature-card-desc">
+                    Select a single color, click one button, and generate a beautiful, harmonized 6-color gradient using customized HSL-shifting formulas.
+                </p>
+            </div>
+
+            <!-- Card 3: Smart Dark Vignette -->
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <i data-lucide="moon" style="width: 20px; height: 20px;"></i>
+                </div>
+                <h3 class="feature-card-title">Smart Dark Overlay ("Darkify")</h3>
+                <p class="feature-card-desc">
+                    Mute overly bright colors into a deep indigo-vignette dark backdrop. Built-in canvas multiply filters preserve colorful highlights.
+                </p>
+            </div>
+
+            <!-- Card 4: Animation Engine -->
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <i data-lucide="sliders" style="width: 20px; height: 20px;"></i>
+                </div>
+                <h3 class="feature-card-title">Live Drift Animation</h3>
+                <p class="feature-card-desc">
+                    Breathe life into static backgrounds. Gpu-accelerated rendering shifts coordinate offsets fluidly. Control movement speed or freeze in place.
+                </p>
+            </div>
+
+            <!-- Card 5: Textures -->
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <i data-lucide="sparkles" style="width: 20px; height: 20px;"></i>
+                </div>
+                <h3 class="feature-card-title">Tactile Film Grain</h3>
+                <p class="feature-card-desc">
+                    Overlay a hardware-accelerated film texture layer. Add grain structure variables to give gradients a warm, tactile paper feel.
+                </p>
+            </div>
+
+            <!-- Card 6: 4K Exports -->
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <i data-lucide="download" style="width: 20px; height: 20px;"></i>
+                </div>
+                <h3 class="feature-card-title">Multi-Resolution 4K Downloads</h3>
+                <p class="feature-card-desc">
+                    Export high-fidelity, uncompressed PNG files customized to match your monitors. Supports 1080p, 1440p, ultra-wide, and 4K UHD.
+                </p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-logo">Chromaful</div>
+        <p class="copyright">morpson // chromaful-online // 2026</p>
+    </footer>
+
+    <!-- Interactive Canvas Animation Simulator Script -->
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Simulator Canvas Logic
+        const canvas = document.getElementById('preview-canvas');
+        const ctx = canvas.getContext('2d');
+        const frame = document.getElementById('mockup-frame');
+        const toggle = document.getElementById('darkify-simulator');
+
+        let time = 0;
+        let animFrameId;
+
+        // Colors to shift through
+        const colors = [
+            { r: 123, g: 47, b: 190 }, // Purple
+            { r: 94, g: 96, b: 206 },  // Indigo
+            { r: 72, g: 202, b: 228 }, // Teal
+            { r: 255, g: 109, b: 0 }    // Orange
+        ];
+
+        function lerp(a, b, t) {
+            return a + (b - a) * t;
+        }
+
+        function drawSimulator() {
+            const w = canvas.width = canvas.clientWidth;
+            const h = canvas.height = canvas.clientHeight;
+            
+            if (w === 0 || h === 0) {
+                animFrameId = requestAnimationFrame(drawSimulator);
+                return;
+            }
+
+            // Create moving coordinates
+            const cx = w / 2;
+            const cy = h / 2;
+            const xOffset = Math.sin(time * 0.015) * w * 0.22;
+            const yOffset = Math.cos(time * 0.012) * h * 0.22;
+
+            // Generate gradient
+            const grad = ctx.createRadialGradient(cx + xOffset, cy + yOffset, 0, cx, cy, Math.max(w, h) * 0.8);
+            
+            // Shift gradient stop colors slowly over time
+            const shift1 = (Math.sin(time * 0.005) + 1) / 2;
+            const shift2 = (Math.cos(time * 0.008) + 1) / 2;
+
+            const r1 = Math.round(lerp(colors[0].r, colors[3].r, shift1));
+            const g1 = Math.round(lerp(colors[0].g, colors[3].g, shift1));
+            const b1 = Math.round(lerp(colors[0].b, colors[3].b, shift1));
+
+            const r2 = Math.round(lerp(colors[1].r, colors[2].r, shift2));
+            const g2 = Math.round(lerp(colors[1].g, colors[2].g, shift2));
+            const b2 = Math.round(lerp(colors[1].b, colors[2].b, shift2));
+
+            grad.addColorStop(0, `rgb(${r1}, ${g1}, ${b1})`);
+            grad.addColorStop(0.4, `rgb(${r2}, ${g2}, ${b2})`);
+            grad.addColorStop(0.85, '#07060f');
+            grad.addColorStop(1, '#020105');
+
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, h);
+
+            // Add fine noise overlays for grain simulation on landing page
+            ctx.fillStyle = 'rgba(255,255,255,0.015)';
+            for (let i = 0; i < 50; i++) {
+                const nx = Math.random() * w;
+                const ny = Math.random() * h;
+                ctx.fillRect(nx, ny, 1.5, 1.5);
+            }
+
+            time += 0.45;
+            animFrameId = requestAnimationFrame(drawSimulator);
+        }
+
+        // Toggle darkify overlay simulation class
+        toggle.addEventListener('change', () => {
+            if (toggle.checked) {
+                frame.classList.add('overlay-active');
+            } else {
+                frame.classList.remove('overlay-active');
+            }
+        });
+
+        // Start animation loop
+        drawSimulator();
+    </script>
 </body>
 </html>
