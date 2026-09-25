@@ -44,40 +44,128 @@ function sampleRgbColors(rgbColors, t) {
   return lerpColor(rgbColors[idx], rgbColors[idx + 1], local);
 }
 
-// Cache for the noise pattern canvas to avoid rebuilding it on every frame
-let noisePatternCanvas = null;
+// ---- AUTHENTIC FILM GRAIN ENGINE ----
+// Simulates organic 35mm silver-halide film emulsion grain.
+// Uses Gaussian-distributed luminance centered on neutral 128 gray with
+// micro-crystal clustering, eliminating digital sensor noise and LCG lattice artifacts.
 
-function getNoisePatternCanvas() {
-  if (noisePatternCanvas) return noisePatternCanvas;
-  if (typeof document === "undefined") return null;
+const GRAIN_TILE_SIZE = 512;
+const GRAIN_FRAMES_COUNT = 4;
+let _grainFrames = null;
+let _grainAnimIndex = 0;
 
-  noisePatternCanvas = document.createElement("canvas");
-  noisePatternCanvas.width = 256;
-  noisePatternCanvas.height = 256;
-  const ctx = noisePatternCanvas.getContext("2d");
-  const imgData = ctx.createImageData(256, 256);
-  const data = imgData.data;
-
-  for (let i = 0; i < data.length; i += 4) {
-    const val = Math.floor(Math.random() * 255);
-    data[i] = val;
-    data[i + 1] = val;
-    data[i + 2] = val;
-    data[i + 3] = 255; // fully opaque in the pattern itself
-  }
-  ctx.putImageData(imgData, 0, 0);
-  return noisePatternCanvas;
+// High-quality xorshift128+ PRNG for artifact-free stochastic sampling
+function createRng(seed) {
+  let s0 = (seed ^ 0x9e3779b9) >>> 0;
+  let s1 = (Math.imul(seed, 0x85ebca6b) ^ 0xc2b2ae35) >>> 0;
+  return function nextFloat() {
+    let x = s0;
+    const y = s1;
+    s0 = y;
+    x ^= x << 23;
+    x ^= x >>> 17;
+    x ^= y ^ (y >>> 26);
+    s1 = x;
+    return ((s0 + s1) >>> 0) / 4294967296;
+  };
 }
 
-// Hardware-accelerated film grain overlay using GPU blending
+function initGrainFrames() {
+  if (typeof document === "undefined") return null;
+  if (_grainFrames) return _grainFrames;
+
+  _grainFrames = [];
+  const rng = createRng(0xdeadbeef);
+
+  for (let f = 0; f < GRAIN_FRAMES_COUNT; f++) {
+    const canvas = document.createElement("canvas");
+    canvas.width = GRAIN_TILE_SIZE;
+    canvas.height = GRAIN_TILE_SIZE;
+    const ctx = canvas.getContext("2d");
+    const imgData = ctx.createImageData(GRAIN_TILE_SIZE, GRAIN_TILE_SIZE);
+    const data = imgData.data;
+
+    // Pass 1: Fine-grain layer with Gaussian distribution (Box-Muller)
+    const fine = new Float32Array(GRAIN_TILE_SIZE * GRAIN_TILE_SIZE);
+    for (let i = 0; i < fine.length; i += 2) {
+      const u1 = Math.max(1e-6, rng());
+      const u2 = rng();
+      const radius = Math.sqrt(-2.0 * Math.log(u1));
+      const theta = 2.0 * Math.PI * u2;
+      fine[i] = radius * Math.cos(theta);
+      if (i + 1 < fine.length) {
+        fine[i + 1] = radius * Math.sin(theta);
+      }
+    }
+
+    // Pass 2: Coarse organic clump layer (simulates emulsion crystal clusters)
+    const coarseSize = GRAIN_TILE_SIZE >> 1;
+    const coarse = new Float32Array(coarseSize * coarseSize);
+    for (let i = 0; i < coarse.length; i += 2) {
+      const u1 = Math.max(1e-6, rng());
+      const u2 = rng();
+      const radius = Math.sqrt(-2.0 * Math.log(u1));
+      const theta = 2.0 * Math.PI * u2;
+      coarse[i] = radius * Math.cos(theta);
+      if (i + 1 < coarse.length) {
+        coarse[i + 1] = radius * Math.sin(theta);
+      }
+    }
+
+    // Combine fine + coarse layers into 50% neutral gray overlay
+    for (let y = 0; y < GRAIN_TILE_SIZE; y++) {
+      const cy = y >> 1;
+      for (let x = 0; x < GRAIN_TILE_SIZE; x++) {
+        const cx = x >> 1;
+        const fineVal = fine[y * GRAIN_TILE_SIZE + x] * 32;
+        const coarseVal = coarse[cy * coarseSize + cx] * 20;
+        
+        // Summed deviation from 128 (neutral mid-gray)
+        const val = Math.round(128 + fineVal + coarseVal);
+        const clamped = Math.max(0, Math.min(255, val));
+
+        const idx = (y * GRAIN_TILE_SIZE + x) * 4;
+        data[idx] = clamped;
+        data[idx + 1] = clamped;
+        data[idx + 2] = clamped;
+        data[idx + 3] = 255;
+      }
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+    _grainFrames.push(canvas);
+  }
+
+  return _grainFrames;
+}
+
 function applyGrain(ctx, w, h, intensity) {
-  const patternCanvas = getNoisePatternCanvas();
-  if (!patternCanvas) return;
+  if (typeof document === "undefined" || intensity <= 0) return;
+
+  const frames = initGrainFrames();
+  if (!frames || frames.length === 0) return;
+
+  // Cycle through precomputed analog grain frames for dynamic jitter
+  const frameCanvas = frames[_grainAnimIndex % frames.length];
+  _grainAnimIndex++;
+
+  const pattern = ctx.createPattern(frameCanvas, "repeat");
+  if (!pattern) return;
+
+  // Pseudo-random subpixel jitter per frame so grain never feels static or grid-locked
+  const ox = ((_grainAnimIndex * 197) % GRAIN_TILE_SIZE);
+  const oy = ((_grainAnimIndex * 283) % GRAIN_TILE_SIZE);
+  if (typeof DOMMatrix !== "undefined") {
+    pattern.setTransform(new DOMMatrix().translateSelf(ox, oy));
+  }
+
+  // Smooth perceptual curve: subtle at lower values, rich and cinematic at high
+  const normalized = intensity / 100;
+  const alpha = Math.min(0.75, normalized * 0.42);
 
   ctx.save();
   ctx.globalCompositeOperation = "overlay";
-  ctx.globalAlpha = (intensity / 100) * 0.12; // subtle grain blend
-  const pattern = ctx.createPattern(patternCanvas, "repeat");
+  ctx.globalAlpha = alpha;
   ctx.fillStyle = pattern;
   ctx.fillRect(0, 0, w, h);
   ctx.restore();
@@ -381,6 +469,128 @@ function drawTwisted(ctx, w, h, rgbColors, twist = 100, time = 0) {
   ctx.putImageData(imageData, 0, 0);
 }
 
+// ---- 3D GRADIENT RENDER ----
+// Renders a large gradient sphere with Phong shading, specular highlight, and
+// an atmospheric halo — looks like a proper 3D render without WebGL.
+function drawGradient3D(ctx, w, h, rgbColors, time = 0) {
+  const imageData = ctx.createImageData(w, h);
+  const data = imageData.data;
+
+  // Background: deep radial space gradient using first and last color, very dark
+  const bgInner = rgbColors[0];
+  const bgOuter = rgbColors[rgbColors.length - 1];
+  const cx = w / 2, cy = h / 2;
+  const diag = Math.sqrt(cx * cx + cy * cy);
+
+  // Sphere params: fills ~68% of the shorter dimension
+  const sphereR = Math.min(w, h) * 0.34;
+
+  // Slow rotation of the sphere's color axis
+  const rotY = time * 0.18;
+
+  // Light direction (normalized) — gently orbiting above-right
+  const lightAngle = time * 0.09;
+  const lx = Math.cos(lightAngle) * 0.6;
+  const ly = -0.55; // slightly above
+  const lz = Math.sin(lightAngle) * 0.6 + 0.8;
+  const lLen = Math.sqrt(lx * lx + ly * ly + lz * lz);
+  const nlx = lx / lLen, nly = ly / lLen, nlz = lz / lLen;
+
+  // Specular shininess exponent
+  const shininess = 48;
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const dx = x - cx, dy = y - cy;
+      const dist2D = Math.sqrt(dx * dx + dy * dy);
+
+      const bgT = Math.min(1, dist2D / diag);
+      // Smooth background blend (quadratic ease-in)
+      const bgBlend = bgT * bgT;
+      const bgR = lerp(bgInner[0], bgOuter[0], bgBlend) * (1 - bgBlend * 0.7);
+      const bgG = lerp(bgInner[1], bgOuter[1], bgBlend) * (1 - bgBlend * 0.7);
+      const bgB = lerp(bgInner[2], bgOuter[2], bgBlend) * (1 - bgBlend * 0.7);
+
+      const idx = (y * w + x) * 4;
+
+      // Outside sphere: background only
+      if (dist2D > sphereR) {
+        // Atmospheric halo: soft glow just outside the sphere edge
+        const haloWidth = sphereR * 0.25;
+        const haloOuter = sphereR + haloWidth;
+        if (dist2D < haloOuter) {
+          const haloT = 1 - (dist2D - sphereR) / haloWidth;
+          const haloFade = haloT * haloT * haloT;
+          // Sample dominant halo color from palette midpoint
+          const [hr, hg, hb] = sampleRgbColors(rgbColors, 0.5);
+          const haloAlpha = haloFade * 0.35;
+          data[idx]     = Math.round(lerp(bgR, hr, haloAlpha));
+          data[idx + 1] = Math.round(lerp(bgG, hg, haloAlpha));
+          data[idx + 2] = Math.round(lerp(bgB, hb, haloAlpha));
+        } else {
+          data[idx]     = Math.round(Math.max(0, bgR));
+          data[idx + 1] = Math.round(Math.max(0, bgG));
+          data[idx + 2] = Math.round(Math.max(0, bgB));
+        }
+        data[idx + 3] = 255;
+        continue;
+      }
+
+      // On the sphere: compute 3D surface normal
+      const nx3 = dx / sphereR;
+      const ny3 = dy / sphereR;
+      const nz3 = Math.sqrt(Math.max(0, 1 - nx3 * nx3 - ny3 * ny3));
+
+      // Rotate normal around Y axis for the color sampling (longitude)
+      const cosR = Math.cos(rotY), sinR = Math.sin(rotY);
+      const rnx = nx3 * cosR + nz3 * sinR;
+      const rnz = -nx3 * sinR + nz3 * cosR;
+
+      // Map spherical longitude+latitude to palette t in [0,1]
+      const lon = (Math.atan2(rnx, rnz) / (Math.PI * 2) + 0.5); // 0..1
+      const lat = (Math.asin(Math.max(-1, Math.min(1, ny3))) / Math.PI + 0.5); // 0..1
+      const colorT = (lon * 0.7 + lat * 0.3) % 1;
+      const [sr, sg, sb] = sampleRgbColors(rgbColors, colorT);
+
+      // Diffuse lighting (Lambertian)
+      const diffuse = Math.max(0, nx3 * nlx + ny3 * nly + nz3 * nlz);
+      const ambient = 0.15;
+      const diffuseTerm = ambient + (1 - ambient) * diffuse;
+
+      // Specular (Blinn-Phong)
+      // Half-vector between light and view (view = (0,0,1) looking at screen)
+      const hx = nlx, hy = nly, hz = nlz + 1;
+      const hLen = Math.sqrt(hx * hx + hy * hy + hz * hz);
+      const spec = Math.pow(Math.max(0, (nx3 * hx + ny3 * hy + nz3 * hz) / hLen), shininess);
+      const specIntensity = spec * 0.85;
+
+      // Rim lighting — brightens edges facing away from light
+      const rimFactor = Math.pow(1 - Math.abs(nz3), 3) * 0.25;
+      const [rimR, rimG, rimB] = sampleRgbColors(rgbColors, (colorT + 0.5) % 1);
+
+      let finalR = sr * diffuseTerm + 255 * specIntensity + rimR * rimFactor;
+      let finalG = sg * diffuseTerm + 255 * specIntensity + rimG * rimFactor;
+      let finalB = sb * diffuseTerm + 255 * specIntensity + rimB * rimFactor;
+
+      // Soft edge fade at sphere boundary (anti-aliased feel)
+      const edgeDist = sphereR - dist2D;
+      if (edgeDist < 1.5) {
+        const edgeFade = edgeDist / 1.5;
+        finalR = lerp(bgR, finalR, edgeFade);
+        finalG = lerp(bgG, finalG, edgeFade);
+        finalB = lerp(bgB, finalB, edgeFade);
+      }
+
+      data[idx]     = Math.round(Math.max(0, Math.min(255, finalR)));
+      data[idx + 1] = Math.round(Math.max(0, Math.min(255, finalG)));
+      data[idx + 2] = Math.round(Math.max(0, Math.min(255, finalB)));
+      data[idx + 3] = 255;
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+}
+
 // ---- MAIN EXPORT ----
 
 export function generateWallpaper(ctx, w, h, type, colors, options = {}) {
@@ -410,19 +620,20 @@ export function generateWallpaper(ctx, w, h, type, colors, options = {}) {
     const rgbColors = safeColors.map(hexToRgb);
 
     switch (type) {
-      case 'solid':     drawSolid(ctx, w, h, safeColors); break;
-      case 'linear':    drawLinear(ctx, w, h, safeColors, time); break;
-      case 'radial':    drawRadial(ctx, w, h, safeColors, time); break;
-      case 'conic':     drawConic(ctx, w, h, rgbColors, time); break;
-      case 'bilinear':  drawBilinear(ctx, w, h, rgbColors, time); break;
-      case 'plasma':    drawPlasma(ctx, w, h, rgbColors, clampedTwist, time); break;
-      case 'noise':     drawNoise(ctx, w, h, rgbColors, time); break;
-      case 'voronoi':   drawVoronoi(ctx, w, h, rgbColors, time); break;
-      case 'stripes':   drawStripes(ctx, w, h, safeColors, time); break;
-      case 'isolines':  drawIsolines(ctx, w, h, safeColors, clampedTwist, time); break;
-      case 'flowfield': drawFlowField(ctx, w, h, safeColors, clampedTwist, time); break;
-      case 'twisted':   drawTwisted(ctx, w, h, rgbColors, clampedTwist, time); break;
-      default:          drawLinear(ctx, w, h, safeColors, time);
+      case 'solid':       drawSolid(ctx, w, h, safeColors); break;
+      case 'linear':      drawLinear(ctx, w, h, safeColors, time); break;
+      case 'radial':      drawRadial(ctx, w, h, safeColors, time); break;
+      case 'conic':       drawConic(ctx, w, h, rgbColors, time); break;
+      case 'bilinear':    drawBilinear(ctx, w, h, rgbColors, time); break;
+      case 'plasma':      drawPlasma(ctx, w, h, rgbColors, clampedTwist, time); break;
+      case 'noise':       drawNoise(ctx, w, h, rgbColors, time); break;
+      case 'voronoi':     drawVoronoi(ctx, w, h, rgbColors, time); break;
+      case 'stripes':     drawStripes(ctx, w, h, safeColors, time); break;
+      case 'isolines':    drawIsolines(ctx, w, h, safeColors, clampedTwist, time); break;
+      case 'flowfield':   drawFlowField(ctx, w, h, safeColors, clampedTwist, time); break;
+      case 'twisted':     drawTwisted(ctx, w, h, rgbColors, clampedTwist, time); break;
+      case 'gradient3d':  drawGradient3D(ctx, w, h, rgbColors, time); break;
+      default:            drawLinear(ctx, w, h, safeColors, time);
     }
 
     if (darkify) {
@@ -440,21 +651,35 @@ export function generateWallpaper(ctx, w, h, type, colors, options = {}) {
   }
 }
 
-// Smart dark overlay utilizing radial gradient and multiply blending
+// Smart dark overlay — pure luminance darkening, no color tinting.
+// Two neutral source-over passes:
+//   1. Uniform dim: a flat semi-transparent black that evenly reduces brightness.
+//   2. Edge vignette: a quadratic radial gradient from transparent center to
+//      soft black edges — gives depth without color banding or godray artifacts.
 function applyDarkify(ctx, w, h) {
+  // Pass 1: uniform luminance reduction
   ctx.save();
-  ctx.globalCompositeOperation = "multiply";
-  const grad = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, Math.sqrt(w*w + h*h)/2);
-  grad.addColorStop(0, "rgba(20, 20, 35, 0.45)");
-  grad.addColorStop(0.5, "rgba(10, 10, 22, 0.75)");
-  grad.addColorStop(1, "rgba(5, 5, 12, 0.96)");
-  ctx.fillStyle = grad;
+  ctx.globalCompositeOperation = "source-over";
+  ctx.fillStyle = "rgba(0, 0, 0, 0.30)";
   ctx.fillRect(0, 0, w, h);
   ctx.restore();
 
+  // Pass 2: smooth edge vignette using a radial gradient (neutral black only,
+  // no blue/indigo tinting that caused the "godray" color fringing before).
+  const cx = w / 2, cy = h / 2;
+  const radius = Math.sqrt(cx * cx + cy * cy); // corner-to-center distance
+  const vignette = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+  // Center is fully transparent — no effect on the middle of the image
+  vignette.addColorStop(0.0, "rgba(0, 0, 0, 0.00)");
+  vignette.addColorStop(0.55, "rgba(0, 0, 0, 0.00)");
+  // Quadratic ramp toward edges — no abrupt bands
+  vignette.addColorStop(0.75, "rgba(0, 0, 0, 0.18)");
+  vignette.addColorStop(0.90, "rgba(0, 0, 0, 0.38)");
+  vignette.addColorStop(1.0,  "rgba(0, 0, 0, 0.52)");
+
   ctx.save();
   ctx.globalCompositeOperation = "source-over";
-  ctx.fillStyle = "rgba(8, 8, 12, 0.28)";
+  ctx.fillStyle = vignette;
   ctx.fillRect(0, 0, w, h);
   ctx.restore();
 }

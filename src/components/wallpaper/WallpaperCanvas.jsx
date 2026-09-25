@@ -21,13 +21,56 @@ export default function WallpaperCanvas({ wallpaperType, colors, resolution, add
     draw();
   }, [draw]);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const link = document.createElement("a");
-    link.download = `chromaful-${wallpaperType}-${Date.now()}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
+    try {
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((b) => {
+          if (b) resolve(b);
+          else reject(new Error("Failed to generate image blob"));
+        }, "image/png");
+      });
+
+      const filename = `chromaful-${wallpaperType}-${Date.now()}.png`;
+
+      if (typeof navigator !== "undefined" && navigator.canShare) {
+        try {
+          const file = new File([blob], filename, { type: "image/png" });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: "Chromaful Wallpaper",
+            });
+            return;
+          }
+        } catch (shareErr) {
+          if (shareErr.name === "AbortError") return;
+        }
+      }
+
+      const blobUrl = URL.createObjectURL(blob);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator?.userAgent || "") || 
+        (navigator?.platform === "MacIntel" && navigator?.maxTouchPoints > 1);
+
+      if (isIOS) {
+        const newTab = window.open(blobUrl, "_blank");
+        if (!newTab) {
+          window.location.href = blobUrl;
+        }
+      } else {
+        const link = document.createElement("a");
+        link.download = filename;
+        link.href = blobUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+    } catch (err) {
+      console.error("Download error:", err);
+    }
   };
 
   return (

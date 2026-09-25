@@ -105,43 +105,47 @@ const MAX_COLORS = {
   solid: 1, linear: 6, radial: 6, conic: 6,
   bilinear: 4, plasma: 6, noise: 6, voronoi: 6,
   stripes: 6, isolines: 6, flowfield: 6, twisted: 6,
+  gradient3d: 6,
 };
 const MIN_COLORS = {
   solid: 1, linear: 2, radial: 2, conic: 2,
   bilinear: 4, plasma: 2, noise: 2, voronoi: 2,
   stripes: 2, isolines: 2, flowfield: 2, twisted: 2,
+  gradient3d: 2,
 };
 
 const TYPE_DOT_COLORS = {
-  solid:     "text-blue-400",
-  linear:    "text-purple-400",
-  radial:    "text-red-400",
-  twisted:   "text-orange-400",
-  bilinear:  "text-slate-400",
-  plasma:    "text-cyan-400",
-  noise:     "text-blue-300",
-  conic:     "text-green-400",
-  voronoi:   "text-green-500",
-  stripes:   "text-red-400",
-  isolines:  "text-slate-300",
-  flowfield: "text-teal-400",
-  random:    "text-pink-400",
+  solid:      "text-blue-400",
+  linear:     "text-purple-400",
+  radial:     "text-red-400",
+  twisted:    "text-orange-400",
+  bilinear:   "text-slate-400",
+  gradient3d: "text-violet-400",
+  plasma:     "text-cyan-400",
+  noise:      "text-blue-300",
+  conic:      "text-green-400",
+  voronoi:    "text-green-500",
+  stripes:    "text-red-400",
+  isolines:   "text-slate-300",
+  flowfield:  "text-teal-400",
+  random:     "text-pink-400",
 };
 
 const TYPE_ICON_SHAPE = {
-  solid:     "■",
-  linear:    "▬",
-  radial:    "●",
-  twisted:   "◉",
-  bilinear:  "⊞",
-  plasma:    "∿",
-  noise:     "▒",
-  conic:     "▲",
-  voronoi:   "⬡",
-  stripes:   "≡",
-  isolines:  "≈",
-  flowfield: "⟳",
-  random:    "✕",
+  solid:      "■",
+  linear:     "▬",
+  radial:     "●",
+  twisted:    "◉",
+  bilinear:   "⊞",
+  gradient3d: "◎",
+  plasma:     "∿",
+  noise:      "▒",
+  conic:      "▲",
+  voronoi:    "⬡",
+  stripes:    "≡",
+  isolines:   "≈",
+  flowfield:  "⟳",
+  random:     "✕",
 };
 
 const TYPE_LABELS = {
@@ -149,6 +153,7 @@ const TYPE_LABELS = {
   conic: "conic gradient", bilinear: "bilinear gradient", plasma: "plasma",
   noise: "blurred noise", voronoi: "voronoi", stripes: "stripes",
   isolines: "isolines", flowfield: "flow field", twisted: "twisted gradient",
+  gradient3d: "3D gradient render",
 };
 
 function randomHex() {

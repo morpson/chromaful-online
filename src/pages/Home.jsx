@@ -12,6 +12,7 @@ const WALLPAPER_TYPES = [
   { id: "radial", label: "radial gradient" },
   { id: "twisted", label: "twisted gradient" },
   { id: "bilinear", label: "bilinear gradient" },
+  { id: "gradient3d", label: "3D gradient render" },
   { id: "plasma", label: "plasma" },
   { id: "noise", label: "blurred noise" },
   { id: "conic", label: "conic gradient" },
@@ -56,7 +57,7 @@ function hslToHex(h, s, l) {
   return `#${rHex}${gHex}${bHex}`.toUpperCase();
 }
 
-const INITIAL_TYPES = ["linear", "radial", "twisted", "bilinear", "plasma", "noise", "conic", "voronoi", "stripes", "isolines", "flowfield"];
+const INITIAL_TYPES = ["linear", "radial", "twisted", "bilinear", "plasma", "noise", "conic", "voronoi", "stripes", "isolines", "flowfield", "gradient3d"];
 
 function getRandomWallpaperType() {
   return INITIAL_TYPES[Math.floor(Math.random() * INITIAL_TYPES.length)];
@@ -80,7 +81,7 @@ export default function Home() {
   const [colors, setColors] = useState(() => getRandomDarkColors());
   const [resolution, setResolution] = useState("2560×1440");
   const [addGrain, setAddGrain] = useState(false);
-  const [grainIntensity, setGrainIntensity] = useState(91);
+  const [grainIntensity, setGrainIntensity] = useState(35);
   const [twist, setTwist] = useState(100);
   const [isGenerating, setIsGenerating] = useState(false);
   const [recentColors, setRecentColors] = useState([
@@ -130,38 +131,30 @@ export default function Home() {
 
   const applyPreset = (themeName) => setColors([...PRESET_THEMES[themeName]]);
 
-  // Canvas drawing function (optimized preview vs. high-resolution export)
-  const draw = useCallback((timeVal = 0, isExport = false) => {
+  // Canvas drawing function (optimized preview)
+  const draw = useCallback((timeVal = 0) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
     try {
-      setIsGenerating(true);
+      // Preview resolution (for smooth animation frames)
+      const dpr = window.devicePixelRatio || 1;
+      // If animating, scale down to 0.35x for smooth 60fps. Otherwise, use 0.75x for a crisp preview.
+      const scaleFactor = animateBg ? 0.35 : 0.75;
       
-      let w, h;
-      if (isExport) {
-        // High resolution for downloading
-        [w, h] = resolution.replace("×", "x").split("x").map(Number);
-      } else {
-        // Preview resolution (for smooth animation frames)
-        const dpr = window.devicePixelRatio || 1;
-        // If animating, scale down to 0.35x for smooth 60fps. Otherwise, use 0.75x for a crisp preview.
-        const scaleFactor = animateBg ? 0.35 : 0.75;
-        
-        w = Math.round(window.innerWidth * dpr * scaleFactor);
-        h = Math.round(window.innerHeight * dpr * scaleFactor);
-        
-        // Safety clamp: do not render huge canvas during preview
-        const maxDim = animateBg ? 640 : 1280;
-        if (w > maxDim || h > maxDim) {
-          const ratio = w / h;
-          if (w > h) {
-            w = maxDim;
-            h = Math.round(maxDim / ratio);
-          } else {
-            h = maxDim;
-            w = Math.round(maxDim * ratio);
-          }
+      let w = Math.round(window.innerWidth * dpr * scaleFactor);
+      let h = Math.round(window.innerHeight * dpr * scaleFactor);
+      
+      // Safety clamp: do not render huge canvas during preview
+      const maxDim = animateBg ? 640 : 1280;
+      if (w > maxDim || h > maxDim) {
+        const ratio = w / h;
+        if (w > h) {
+          w = maxDim;
+          h = Math.round(maxDim / ratio);
+        } else {
+          h = maxDim;
+          w = Math.round(maxDim * ratio);
         }
       }
       
@@ -179,10 +172,8 @@ export default function Home() {
       });
     } catch (error) {
       console.error("Canvas generation error:", error);
-    } finally {
-      setIsGenerating(false);
     }
-  }, [wallpaperType, colors, resolution, addGrain, grainIntensity, twist, animateBg, darkify]);
+  }, [wallpaperType, colors, addGrain, grainIntensity, twist, animateBg, darkify]);
 
   // RequestAnimationFrame loop
   useEffect(() => {
@@ -196,7 +187,7 @@ export default function Home() {
       // Update running time based on speed
       timeRef.current += delta * animationSpeed;
       
-      draw(timeRef.current, false);
+      draw(timeRef.current);
       
       if (animateBg) {
         animId = requestAnimationFrame(loop);
@@ -208,7 +199,7 @@ export default function Home() {
       animId = requestAnimationFrame(loop);
     } else {
       // Draw static once
-      draw(timeRef.current, false);
+      draw(timeRef.current);
     }
     
     return () => {
@@ -216,21 +207,78 @@ export default function Home() {
     };
   }, [animateBg, animationSpeed, draw]);
 
-  const handleDownload = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const handleDownload = async () => {
     try {
       setIsGenerating(true);
-      // Temporarily draw at high export resolution
-      draw(timeRef.current, true);
+      const [w, h] = resolution.replace("×", "x").split("x").map(Number);
       
-      const link = document.createElement("a");
-      link.download = `chromaful-${wallpaperType}-${Date.now()}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-      
-      // Restore preview resolution
-      draw(timeRef.current, false);
+      // Render at high export resolution on a dedicated offscreen canvas
+      const offscreenCanvas = document.createElement("canvas");
+      offscreenCanvas.width = w;
+      offscreenCanvas.height = h;
+      const ctx = offscreenCanvas.getContext("2d");
+      if (!ctx) throw new Error("Failed to get canvas context");
+
+      generateWallpaper(ctx, w, h, wallpaperType, colors, {
+        addGrain,
+        grainIntensity,
+        twist,
+        time: timeRef.current,
+        darkify,
+      });
+
+      const blob = await new Promise((resolve, reject) => {
+        offscreenCanvas.toBlob((b) => {
+          if (b) resolve(b);
+          else reject(new Error("Failed to generate image blob"));
+        }, "image/png");
+      });
+
+      const filename = `chromaful-${wallpaperType}-${Date.now()}.png`;
+
+      // 1. Web Share API (Primary for iOS Safari & Mobile - allows native "Save Image" to Photos / Camera Roll)
+      if (typeof navigator !== "undefined" && navigator.canShare) {
+        try {
+          const file = new File([blob], filename, { type: "image/png" });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: "Chromaful Wallpaper",
+            });
+            return;
+          }
+        } catch (shareError) {
+          if (shareError.name === "AbortError") {
+            // User cancelled share sheet
+            return;
+          }
+          console.warn("Web Share failed, falling back to download:", shareError);
+        }
+      }
+
+      // 2. Blob URL Download fallback (for desktop & browsers supporting <a> download)
+      const blobUrl = URL.createObjectURL(blob);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator?.userAgent || "") || 
+        (navigator?.platform === "MacIntel" && navigator?.maxTouchPoints > 1);
+
+      if (isIOS) {
+        // Fallback on iOS if Web Share is not available: open in new tab for user to tap & hold
+        const newTab = window.open(blobUrl, "_blank");
+        if (!newTab) {
+          window.location.href = blobUrl;
+        }
+      } else {
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      setTimeout(() => {
+        URL.revokeObjectURL(blobUrl);
+      }, 30000);
     } catch (error) {
       console.error("Download error:", error);
     } finally {
